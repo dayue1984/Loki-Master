@@ -137,9 +137,9 @@ AppsKey & Down::Volume_Down
 AppsKey & Left::Media_Prev
 AppsKey & Right::Media_Next
 AppsKey & Enter::Media_Play_Pause
-; Swtich Appskey & RAlt
-AppsKey::Ralt 
-RAlt::AppsKey
+; Swtich the Appskey/RAlt for Filco Minila Air, Disabled for Release
+; AppsKey::Ralt 
+; RAlt::AppsKey
 
 ; /////////
 ; Menu Subs
