@@ -1,6 +1,6 @@
 ; ///////////////////////////////////////////
 ; An enhencement for Logi Master 3 like mouse
-; Works with Logi Master 3 / Filco Minila air
+; The lite version without mods, osd & config
 ; AutoHotkey 1.1.33.10 / Win11 21H2 22000.348
 ; ///////////////////////////////////////////
 
@@ -22,18 +22,10 @@ SetWorkingDir %A_ScriptDir%
 ; ///////
 ; Globals
 ; ///////
-global app_Name = "Loki Master" ; This is Used by Autorun & Msgbox
+global app_Name = "Loki Master Lite" ; This is Used by Autorun & Msgbox
 global app_Version = "0.21.1210"
-global app_ConfigFile = "Config.ini"
-global app_KeyDelay = 50
-global app_TimerPeriod = 500
 global desktop_Count = 1 ; Will be Updated by desktop_Update()
 global desktop_Current = 1 ; Current desktop
-global mode_User = 1 ; User Selected Mode
-global mode_OnTheFly = 0 ; The Current Actived Mode by mode_WatchDog()
-global mode_NameList := ["SMART","DESKTOP","CODE","OFFICE","BROWSER","MEDIA"] ; Mode Name List for OSD/Config
-global mode_AppList := [] ; App Titles for Smart Mode
-global mode_OSDList := [] ; Turn ON/OFF OSD with Specified Modes
 
 ; /////////
 ; Tray Menu
@@ -49,74 +41,25 @@ Menu, Tray, Default, Exit
 ; ////
 ; Main
 ; ////
-SetKeyDelay, %app_KeyDelay%
-config_Read()
+SetKeyDelay, 75
 autorun_Check()
-SetTimer, mode_WatchDog, %app_TimerPeriod%
+SetTimer, mode_WatchDog, 600
 
 ; /////
 ; Mouse
 ; /////
-; Gestrue Key: Loop the Modes
 XButton1:: ; Cycle Desktops
 {
     desktop_SwitchByCycle() 
 }
 XButton2::Send {LWin Down}d{LWin Up} ; Show Desktop
-#Tab:: ; Switch Mode
-If (mode_User < mode_NameList.Length()) {
-    mode_User++
-}
-Else {
-    mode_User = 1
-}
-config_Save()
+WheelLeft::Volume_Up
+WheelRight::Volume_Down
 ; OutputDebug, [MODE] User: %mode_User%
-
-; /////
-; Modes
-; /////
-; Desktop
-#If mode_OnTheFly = 2
-WheelLeft::Volume_Up
-WheelRight::Volume_Down
-#If
-; CODE
-#If mode_OnTheFly = 3
-; XButton1::Home
-; XButton2::End
-WheelLeft::Send {LCtrl Down}{NumpadAdd}{NumpadAdd Up}{LCtrl Up} ; Zoom In
-WheelRight::Send {LCtrl Down}{NumpadSub}{NumpadSub Up}{LCtrl Up} ; Zoom Out
-#If
-; Office
-#If mode_OnTheFly = 4
-; XButton1::Home
-; XButton2::End
-WheelLeft::Send {LCtrl Down}{WheelUp}{LCtrl Up} ; Zoom In
-WheelRight::Send {LCtrl Down}{WheelDown}{LCtrl Up} ; Zoom Out
-#If
-; Browser
-#If mode_OnTheFly = 5
-; XButton1::Browser_Forward
-; XButton2::Browser_Back
-; MButton::Browser_Refresh
-WheelLeft::Send {LCtrl Down}{NumpadAdd}{NumpadAdd Up}{LCtrl Up} ; Zoom In
-WheelRight::Send {LCtrl Down}{NumpadSub}{NumpadSub Up}{LCtrl Up} ; Zoom Out
-#If
-; Media
-#If mode_OnTheFly = 6
-LButton::Media_Prev
-RButton::Media_Next
-MButton::Media_Play_Pause
-WheelLeft::Volume_Up
-WheelRight::Volume_Down
-#If
 
 ; ////////
 ; Keyboard
 ; ////////
-; Capslock OSD
-CapsLock:: invert_CapsLock()
 ; Desktop Control
 +#1:: desktop_SwitchByNumber(1)
 +#2:: desktop_SwitchByNumber(2)
@@ -176,9 +119,9 @@ Return
 ; /////////////
 ; Sub Functions
 ; /////////////
-; Watchdog for Desktop & Mode
+; Watchdog for Desktop
 mode_WatchDog() {
-    static lastUserMode := 0, lastDesktop = 0
+    static lastDesktop = 0
     ; Virtual Desktop
     desktop_Update()
     if (lastDesktop <> desktop_Current) {
@@ -190,76 +133,7 @@ mode_WatchDog() {
         Menu, Tray, Icon, %A_ScriptDir%\res\%themeID%\%desktop_Current%.ico
         ; OutputDebug, [DESKTOP] OnTheFly: %mode_OnTheFly%
     }
-    ; Switch Mode
-    if (lastUserMode <> mode_User) {
-        lastUserMode := mode_User
-        mode_OnTheFly := mode_User
-        OSD(mode_NameList[(mode_User)])
-    }
-    ; Smart Mode
-    if (mode_User = 1) {
-        dogCatched := False
-        winTitle = ""
-        WinGetActiveTitle, winTitle
-        if StrLen(winTitle) {
-            Loop % mode_NameList.Length() {
-                if winTitle Contains % mode_AppList[(A_Index)]
-                {
-                    ; New Mode Catched?
-                    if (mode_OnTheFly <> A_Index) {
-                        mode_OnTheFly := A_Index
-                        ; Check [OSD] Section in Config
-                        if (mode_OSDList[(mode_OnTheFly)]) {
-                            OSD(mode_NameList[(mode_OnTheFly)], True)
-                        }
-                        ; OutputDebug, [MODE] OnTheFly: %mode_OnTheFly% 
-                    }
-                    dogCatched := True
-                    Break
-                }
-            }
-        }
-        ; Fallback to Desktop Mode
-        if !dogCatched {
-            mode_OnTheFly := 2
-        }
-    }
     Return
-}
-; Invert the CapsLock
-invert_CapsLock() {
-    static flag_CpasLock := False
-    if flag_CpasLock {
-        SetCapsLockState, off
-        flag_CpasLock := False
-        OSD("Caps OFF")
-    }
-    else {
-        SetCapsLockState, on
-        flag_CpasLock := True
-        OSD("Caps ON")
-    }
-    Return
-}
-; On Screen Display
-OSD(TXT, Grayed:=False)
-{
-    backColor = EEAA99
-    Gui, OSD: +AlwaysOnTop +LastFound +Owner 
-    Gui, OSD: Color, %backColor% 
-    Gui, OSD: Font, s20, Verdana
-    if Grayed {
-        Gui, OSD: Add, Text, cSilver, %TXT%
-    }
-    Else {
-        Gui, OSD: Add, Text, cLime, %TXT%
-    }
-    WinSet, TransColor, %backColor% 200 ; Transparent
-    Gui, OSD: -Caption
-    Gui, OSD: Show, center center
-    Sleep, 500
-    Gui, OSD: destroy
-    return
 }
 ; Update Virtual Desktops from Registry
 desktop_Update() {
@@ -375,25 +249,4 @@ autorun_Check() {
     }
     Menu, Tray, UnCheck, Autorun
     Return False
-}
-; Save Configs
-config_Save() {
-    IniWrite, %mode_User%, %app_ConfigFile%, APP, MODE_USER
-    Return
-}
-; Read Configs
-config_Read() {
-    IniRead, mode_User, %app_ConfigFile%, APP, MODE_USER, 1
-    IniRead, app_KeyDelay, %app_ConfigFile%, APP, KEY_DELAY, 50
-    IniRead, app_TimerPeriod, %app_ConfigFile%, APP, TIMER_PERIOD, 500
-    Loop % mode_NameList.Length() {
-        strApp := ""
-        strOSD := False
-        strKey := mode_NameList[(A_Index)]
-        IniRead, strApp, %app_ConfigFile%, MODE, %strKey%, ""
-        IniRead, strOSD, %app_ConfigFile%, SMART_OSD, %strKey%, False
-        mode_AppList[(A_Index)] := strApp
-        mode_OSDList[(A_Index)] := strOSD
-    }
-    Return
 }
