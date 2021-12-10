@@ -36,3 +36,6 @@ The code is written for Logitech MX Master 3 like mouse with:
 * OSD
 
   * Configable On Sscreen Display
+* Lite Version
+
+  * A lite version without modes，OSD and config files
