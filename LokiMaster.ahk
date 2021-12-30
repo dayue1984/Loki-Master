@@ -9,6 +9,22 @@
 ; ///////
 ;@Ahk2Exe-SetMainIcon %A_ScriptDir%/res/1/1.ico
 
+; /////////
+; Privilege
+; /////////
+full_command_line := DllCall("GetCommandLine", "str") 
+if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)")) 
+{ 
+    try ; leads to having the script re-launching itself as administrator 
+    { 
+     if A_IsCompiled 
+      Run *RunAs "%A_ScriptFullPath%" /restart 
+     else 
+      Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%" 
+    } 
+    ExitApp 
+} 
+
 ; ////////////
 ; Environments
 ; ////////////
@@ -16,6 +32,7 @@
 ;#Warn
 #Persistent
 #SingleInstance force
+#UseHook
 SendMode Input
 SetWorkingDir %A_ScriptDir%
 
@@ -23,7 +40,7 @@ SetWorkingDir %A_ScriptDir%
 ; Globals
 ; ///////
 global app_Name = "Loki Master" ; This is Used by Autorun & Msgbox
-global app_Version = "0.21.1210"
+global app_Version = "0.21.1228"
 global app_ConfigFile = "Config.ini"
 global app_KeyDelay = 50
 global app_TimerPeriod = 500
@@ -62,7 +79,7 @@ XButton1:: ; Cycle Desktops
 {
     desktop_SwitchByCycle() 
 }
-XButton2::Send {LWin Down}d{LWin Up} ; Show Desktop
+XButton2::Send #d
 #Tab:: ; Switch Mode
 If (mode_User < mode_NameList.Length()) {
     mode_User++
@@ -85,8 +102,8 @@ WheelRight::Volume_Down
 #If mode_OnTheFly = 3
 ; XButton1::Home
 ; XButton2::End
-WheelLeft::Send {LCtrl Down}{NumpadAdd}{NumpadAdd Up}{LCtrl Up} ; Zoom In
-WheelRight::Send {LCtrl Down}{NumpadSub}{NumpadSub Up}{LCtrl Up} ; Zoom Out
+WheelLeft::Send {LCtrl Down}{NumpadAdd}{LCtrl Up} ; Zoom In
+WheelRight::Send {LCtrl Down}{NumpadSub}{LCtrl Up} ; Zoom Out
 #If
 ; Office
 #If mode_OnTheFly = 4
@@ -100,8 +117,8 @@ WheelRight::Send {LCtrl Down}{WheelDown}{LCtrl Up} ; Zoom Out
 ; XButton1::Browser_Forward
 ; XButton2::Browser_Back
 ; MButton::Browser_Refresh
-WheelLeft::Send {LCtrl Down}{NumpadAdd}{NumpadAdd Up}{LCtrl Up} ; Zoom In
-WheelRight::Send {LCtrl Down}{NumpadSub}{NumpadSub Up}{LCtrl Up} ; Zoom Out
+WheelLeft::Send {LCtrl Down}{NumpadAdd}{LCtrl Up} ; Zoom In
+WheelRight::Send {LCtrl Down}{NumpadSub}{LCtrl Up} ; Zoom Out
 #If
 ; Media
 #If mode_OnTheFly = 6

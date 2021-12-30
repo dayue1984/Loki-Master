@@ -9,6 +9,22 @@
 ; ///////
 ;@Ahk2Exe-SetMainIcon %A_ScriptDir%/res/1/1.ico
 
+; /////////
+; Privilege
+; /////////
+full_command_line := DllCall("GetCommandLine", "str") 
+if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)")) 
+{ 
+    try ; leads to having the script re-launching itself as administrator 
+    { 
+     if A_IsCompiled 
+      Run *RunAs "%A_ScriptFullPath%" /restart 
+     else 
+      Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%" 
+    } 
+    ExitApp 
+} 
+
 ; ////////////
 ; Environments
 ; ////////////
@@ -16,6 +32,7 @@
 ;#Warn
 #Persistent
 #SingleInstance force
+#UseHook
 SendMode Input
 SetWorkingDir %A_ScriptDir%
 
@@ -23,7 +40,7 @@ SetWorkingDir %A_ScriptDir%
 ; Globals
 ; ///////
 global app_Name = "Loki Master Lite" ; This is Used by Autorun & Msgbox
-global app_Version = "0.21.1210"
+global app_Version = "0.21.1228"
 global desktop_Count = 1 ; Will be Updated by desktop_Update()
 global desktop_Current = 1 ; Current desktop
 
@@ -52,7 +69,7 @@ XButton1:: ; Cycle Desktops
 {
     desktop_SwitchByCycle() 
 }
-XButton2::Send {LWin Down}d{LWin Up} ; Show Desktop
+XButton2::Send #d
 WheelLeft::Volume_Up
 WheelRight::Volume_Down
 ; OutputDebug, [MODE] User: %mode_User%
